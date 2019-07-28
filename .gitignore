@@ -1,3 +1,4 @@
+.gitignore
 bin/Debug/netcoreapp2.2/ImageDistortionByMirror.dll
 bin/Debug/netcoreapp2.2/ImageDistortionByMirror.pdb
 bin/Debug/netcoreapp2.2/ImageDistortionByMirror.deps.json
