@@ -1,7 +1,19 @@
 using System;
+using System.IO;
 
 namespace ImageDistortionByMirror
 {
+    public class SizeData
+    {
+        public double maxX { get; set; }
+        public double minX { get; set; }
+        public double maxY { get; set; }
+        public double minY { get; set; }
+
+        public int width { get; set; }
+        public int height { get; set; }
+    }
+
     public enum Optimize
     {
         Maximum, Minimum
@@ -14,28 +26,39 @@ namespace ImageDistortionByMirror
     {
         public double r;
         public string image;
-        public Distortion(double mirrorRadius, string imageFileName)
+
+        public int offsetX;
+        public int offsetY;
+        public Distortion(double mirrorRadius, string imageFileName, int offsetX, int offsetY)
         {
-            r = mirrorRadius;
-            image = imageFileName;
+            this.r = mirrorRadius;
+            this.image = imageFileName;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
         }
 
         public void StartImageDistortion()
         {
             var bitmap = ImageManager.ImageToBitmap(image);
-            var lastXY = DistortedCoordinate(bitmap.Width, bitmap.Height);
-            var newBitmap = ImageManager.CreateBitmap((int)lastXY[0], (int)lastXY[1]);
+            var sizeData = CalculateSize(bitmap.Width, bitmap.Height);
+            var newBitmap = ImageManager.CreateBitmap(sizeData.width, sizeData.height);
 
             for (int y = 1; y < bitmap.Height; y++)
             {
                 for (int x = 1; x < bitmap.Width; x++)
                 {
                     var color = bitmap.GetPixel(x, y);
+                    var XY = DistortedCoordinate(x, y);
 
-                    var newXY = DistortedCoordinate(x, y);
+                    int newX = (int)(XY[0]) - (int)(sizeData.maxX);
+                    int newY = (int)(XY[1]) - (int)(sizeData.minY);
 
-                    newBitmap.SetPixel((int)newXY[0], (int)newXY[1], color);
+                    if ((newBitmap.Width > newX && newBitmap.Height > newY) && (newX > 0 && newY > 0)) 
+                    {
+                         newBitmap.SetPixel(newX, newY, color);
+                    }
 
+                    
                 }
             }
 
@@ -48,8 +71,8 @@ namespace ImageDistortionByMirror
         /// <returns>Координаты (x, y)</returns>
         public double[] DistortedCoordinate(double x1, double y1)
         {
-            var x2 = x1 * -1;
-            var y2 = y1 * -1;
+            var x2 = x1 == 0 ? 0.001 : x1;
+            var y2 = y1 == 0 ? 0.001 : y1;
 
             var r2 = r / 2;
 
@@ -75,7 +98,7 @@ namespace ImageDistortionByMirror
             double c1 = coordinate[0];
             double c2 = coordinate[1];
             double c3 = coordinate[2];
-            double e = 0.001;
+            double e = 0.00001;
 
             double f = (1 + Math.Sqrt(5)) / 2;
 
@@ -85,10 +108,11 @@ namespace ImageDistortionByMirror
                 double gold1 = c2 - (c2 - c1) / f;
                 double gold2 = c1 + (c2 - c1) / f;
 
-                var axisIndex = (axis == Axis.X) ? 0 : 1;
+                var axisCondition = (axis == Axis.X);
+                var axisIndex = axisCondition ? 0 : 1;
 
-                double v1 = DistortedCoordinate(c3, gold1)[axisIndex];
-                double v2 = DistortedCoordinate(c3, gold2)[axisIndex];
+                double v1 = axisCondition ? DistortedCoordinate(c3, gold1)[axisIndex] : DistortedCoordinate(gold1, c3)[axisIndex];
+                double v2 = axisCondition ? DistortedCoordinate(c3, gold2)[axisIndex] : DistortedCoordinate(gold2, c3)[axisIndex];
 
                 // Maximum : v1 < v2 , Minimum : v1 > v2
                 var optimizeCondition = (optimize == Optimize.Maximum) ? (v1 < v2) : (v1 > v2);
@@ -106,63 +130,28 @@ namespace ImageDistortionByMirror
         /// <summary>Подсчет ширины и высоты конечной картинки</summary>
         /// <param name="w">Исходная ширина</param>
         /// <param name="h">Исходная высота</param>
-        /// <param name="shiftX">Сдвиг по X</param>
-        /// <param name="shiftY">Сдвиг по Y</param>
-        public void CalculateWidthHeight(int w, int h, int shiftX, int shiftY)
+        public SizeData CalculateSize(int w, int h)
         {
             // top left
-            double x1 = 0 + shiftX;
-            double y1 = 0 + shiftY;
+            double x1 = 0 + offsetX;
+            double y1 = 0 + offsetY;
 
             // top right
-            double x2 = w + shiftX;
-            double y2 = 0 + shiftY;
+            double x2 = w + offsetX;
+            double y2 = 0 + offsetY;
 
             // bottom left
-            double x3 = 0 + shiftX;
-            double y3 = h + shiftY;
+            double x3 = 0 + offsetX;
+            double y3 = h + offsetY;
 
             // bottom right
-            double x4 = w + shiftX;
-            double y4 = h + shiftY;
+            double x4 = w + offsetX;
+            double y4 = h + offsetY;
 
-
-
-            // Distort 4 points
-            var xy1 = DistortedCoordinate(x1, y1);
-            var xy2 = DistortedCoordinate(x2, y2);
-            var xy3 = DistortedCoordinate(x3, y3);
-            var xy4 = DistortedCoordinate(x4, y4);
-
-            // top left
-            var xx1 = xy1[0];
-            var yy1 = xy1[1];
-
-            // top right
-            var xx2 = xy2[0];
-            var yy2 = xy2[1];
-
-            // bottom left
-            var xx3 = xy3[0];
-            var yy3 = xy3[1];
-
-            // bottom right
-            var xx4 = xy4[0];
-            var yy4 = xy4[1];
-
-
-            // x1 x2 y1 -> min y
-            // x1 x2 y2 -> max y
-            // y1 y2 x1 -> min x
-            // y1 y2 x2 -> max x
-
-            // Почему мы передаем три координаты?
-            // Если нам нужно узнать как изогнулась линия на вход нужно подавать (x1 y1) и (x2 y2)
-
-            var minY = OptimizeCoordinate(new double[3] { xx1, xx2, yy1 }, Optimize.Minimum, Axis.Y);
-            var maxY = OptimizeCoordinate(new double[3] { xx1, xx2, yy2 }, Optimize.Maximum, Axis.Y);
-            var minX = OptimizeCoordinate(new double[3] { yy1, yy2, xx1 }, Optimize.Minimum, Axis.X);
-            var maxX = OptimizeCoordinate(new double[3] { yy1, yy2, xx2 }, Optimize.Maximum, Axis.X);
+            var maxY = OptimizeCoordinate(new double[3] { x1, x2, y1 }, Optimize.Maximum, Axis.Y);
+            var minY = OptimizeCoordinate(new double[3] { x1, x2, y3 }, Optimize.Minimum, Axis.Y);
+            var maxX = OptimizeCoordinate(new double[3] { y1, y3, x2 }, Optimize.Maximum, Axis.X);
+            var minX = OptimizeCoordinate(new double[3] { y1, y3, x1 }, Optimize.Minimum, Axis.X);
 
 
             Console.WriteLine($"minY: {minY}");
@@ -170,6 +159,14 @@ namespace ImageDistortionByMirror
             Console.WriteLine($"minX: {minX}");
             Console.WriteLine($"maxX: {maxX}");
 
+            return new SizeData() {
+                maxX = maxX,
+                minX = minX,
+                maxY = maxY,
+                minY = minY,
+                width = (int)Math.Abs(maxX - minX) ,
+                height = (int)Math.Abs(maxY - minY) 
+            };
         }
 
         private double sqrt(double x)
