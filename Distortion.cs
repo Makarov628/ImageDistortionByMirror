@@ -42,7 +42,7 @@ namespace ImageDistortionByMirror
         {
             var bitmap = ImageManager.ImageToBitmap(image);
             var sizeData = CalculateSize(bitmap.Width, bitmap.Height);
-            var newBitmap = ImageManager.CreateBitmap(sizeData.width * 3, sizeData.height *  3);
+            var newBitmap = ImageManager.CreateBitmap(sizeData.width, sizeData.height);
             
 
             for (int y = 1; y < bitmap.Height; y++)
@@ -52,8 +52,8 @@ namespace ImageDistortionByMirror
                     var color = bitmap.GetPixel(x, y);
                     var XY = DistortedCoordinate(x + offsetX, y + offsetY);
 
-                    int newX = (int)(XY[0]) + (newBitmap.Width / 2) ;
-                    int newY = (int)(XY[1]) + (newBitmap.Height / 2) ;
+                    int newX = (int)((XY[0]) + abs(sizeData.maxX)); 
+                    int newY = (int)((XY[1]) - sizeData.minY) ;
                     
                     //newX = newX > 0 ? newX : (int)abs(newX);
                     //newY = newY > 0 ? newY : (int)abs(newY);
@@ -155,8 +155,8 @@ namespace ImageDistortionByMirror
 
             var maxY = OptimizeCoordinate(new double[3] { x1, x2, y1 }, Optimize.Maximum, Axis.Y);
             var minY = OptimizeCoordinate(new double[3] { x1, x2, y3 }, Optimize.Minimum, Axis.Y);
-            var maxX = OptimizeCoordinate(new double[3] { y1, y3, x2 }, Optimize.Maximum, Axis.X);
-            var minX = OptimizeCoordinate(new double[3] { y1, y3, x1 }, Optimize.Minimum, Axis.X);
+            var maxX = OptimizeCoordinate(new double[3] { y1, y3, x2 }, Optimize.Minimum, Axis.X);
+            var minX = OptimizeCoordinate(new double[3] { y1, y3, x1 }, Optimize.Maximum, Axis.X);
 
 
             Console.WriteLine($"minY: {minY}");
@@ -165,31 +165,31 @@ namespace ImageDistortionByMirror
             Console.WriteLine($"maxX: {maxX}");
 
 
-            var xy1 = DistortedCoordinate(x1, y1);
-            var xy2 = DistortedCoordinate(x2, y2);
-            var xy3 = DistortedCoordinate(x3, y3);
-            var xy4 = DistortedCoordinate(x4, y4);
+            // var xy1 = DistortedCoordinate(x1, y1);
+            // var xy2 = DistortedCoordinate(x2, y2);
+            // var xy3 = DistortedCoordinate(x3, y3);
+            // var xy4 = DistortedCoordinate(x4, y4);
 
-            var width = int.MinValue;
-            var height = int.MinValue;
+            var width = abs(minX - maxX);
+            var height = abs(minY - maxY);
 
-            var arr = new List<double[]>() { xy1, xy2, xy3, xy4 }; 
+            // var arr = new List<double[]>() { xy1, xy2, xy3, xy4 }; 
 
-            for (int i = 0; i < arr.Count; i++)
-            {
-                var x = (int)abs(arr[i][0]);
-                var y = (int)abs(arr[i][1]);
+            // for (int i = 0; i < arr.Count; i++)
+            // {
+            //     var x = (int)abs(arr[i][0]);
+            //     var y = (int)abs(arr[i][1]);
                 
-                if (x > width) 
-                {
-                    width = x;
-                }
+            //     if (x > width) 
+            //     {
+            //         width = x;
+            //     }
 
-                if (y > height) 
-                {
-                    height = y;
-                }
-            }
+            //     if (y > height) 
+            //     {
+            //         height = y;
+            //     }
+            // }
 
             // // top
             // var top = (Int64)abs(sqrt(sqr(xy2[0] - xy1[0]) - sqr(xy2[1] - xy1[1])));
@@ -211,8 +211,8 @@ namespace ImageDistortionByMirror
                 minX = minX,
                 maxY = maxY,
                 minY = minY,
-                width = width,
-                height = height
+                width = (int)width,
+                height = (int)height
             };
         }
 

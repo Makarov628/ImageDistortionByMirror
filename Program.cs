@@ -22,25 +22,25 @@ namespace ImageDistortionByMirror
 
             // dh1.CalculateWidthHeight(2560, 1440, -155, -125, Axis.X, 2);
            
-            //var d = new Distortion(4100, "climb.png", 0, 0);
-            //d.StartImageDistortion();
+            var d = new Distortion(2000, "climb.png", 1000, 0);
+            d.StartImageDistortion();
 
-            for (int i = 0; i <= 5000; i += 500)
-            {
-                try
-                {
-                    var d = new Distortion(5600, "wall-e.png", -1000, i);
-                    d.StartImageDistortion();
-                    Console.WriteLine($"climb_{2000}R created.");
-                }
-                catch (System.Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"climb_{2000}R {e.Message}");
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
+            // for (int i = 0; i <= 5000; i += 500)
+            // {
+            //     try
+            //     {
+            //         var d = new Distortion(5600, "wall-e.png", -1000, i);
+            //         d.StartImageDistortion();
+            //         Console.WriteLine($"climb_{2000}R created.");
+            //     }
+            //     catch (System.Exception e)
+            //     {
+            //         Console.ForegroundColor = ConsoleColor.Red;
+            //         Console.WriteLine($"climb_{2000}R {e.Message}");
+            //         Console.ForegroundColor = ConsoleColor.White;
+            //     }
                 
-            }
+            // }
 
             
         }
