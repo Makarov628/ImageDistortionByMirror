@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-
+ 
 namespace ImageDistortionByMirror
 {
     public class DistortionHypothesis1
